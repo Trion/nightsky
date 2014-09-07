@@ -13,35 +13,38 @@
 #include <EEPROM.h>
 
 #define FRAME_SIZE 5 // Frame size in byte
-#define MAX_FRAME_COUNT 200 // Maximum amount of frames, that can be saved
+#define MAX_FRAME_COUNT 200 // Maximum amount of frames, that can be stored
 #define STEP_DURATION 100 // Time of an animation step
 #define LINE_AMOUNT 5
 #define LINE_OFFSET 1 // It was easier not to connect Q0, so the first line is connected to Q1
 
-// Pin connected to ST_CP of 74HC595
-int latchPin = 8;
-// Pin connected to SH_CP of 74HC595
-int clockPin = 12;
-// Pin connected to DS of 74HC595
-int dataPin = 11;
+// === Animation management ===
+void loadFrame(int i);
+void restartAnimation();
 
-// Function definitions
-// Transmission
+// Current frame state
+unsigned short curFrameDuration = 0; // Left duration of the current frame
+unsigned byte curFrame[LINE_AMOUNT]; // Current frame (one byte is one line)
+unsigned byte curLine = 0; // Id of the line, that should be currently on
+unsigned short nextFrameId = 0; // Id of the next frame
+
+// Timestamp of the last step
+unsigned long lastStepTime = 0;
+
+// Pins
+int latchPin = 8; // Pin connected to ST_CP of 74HC595
+int clockPin = 12; // Pin connected to SH_CP of 74HC595
+int dataPin = 11; // Pin connected to DS of 74HC595
+// ========
+
+// === Transmission ===
 void processRequest();
 void processPing();
 void processFrameTransmission();
 // Pin to indicate whether transmission is in progress
 int infoPin = 13;
+// ========
 
-// Animation management
-void loadFrame(int i);
-void restartAnimation();
-// Current frame
-unsigned short curFrameDuration = 0; // Left duration of the current frame
-unsigned byte curFrame[LINE_AMOUNT]; // Current frame (one byte is one line)
-unsigned byte curLine = 0; // Id of the line, that should be currently on
-unsigned short nextFrameId = 0; // Id of the next frame
-unsigned long lastStepTime = 0; // Timestamp of the last step
 
 void setup() {
     // Animation setup
@@ -56,12 +59,6 @@ void setup() {
 
 void loop() {
 
-    // Determine end of step
-    if ((millis() - lastStepTime) >= STEP_DURATION || (millis() - lastStepTime) < 0) {
-        lastStepTime = millis();
-        curFrameDuration--;
-    }
-
     // Load next frame, when it's over
     if (curFrameDuration < 1) {
         loadFrame(nextFrameId);
@@ -75,6 +72,12 @@ void loop() {
     digitalWrite(latchPin, HIGH);
 
     curLine = (curLine + 1) % LINE_AMOUNT;
+
+    // Determine end of step
+    if ((millis() - lastStepTime) >= STEP_DURATION || (millis() - lastStepTime) < 0) {
+        lastStepTime = millis();
+        curFrameDuration--;
+    }
 }
 
 // Serial Event callback
