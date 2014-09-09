@@ -19,8 +19,12 @@
 #define LINE_OFFSET 1 // It was easier not to connect Q0, so the first line is connected to Q1
 
 // === Animation management ===
-void loadFrame(int i);
 void restartAnimation();
+void loadFrame(int i);
+void saveFrame(int frameId, unsigned byte* frame);
+void setEndFlag(int frameId);
+bool isEndFlag(int frameId);
+void writeDefaultClip();
 
 // Current frame state
 unsigned short curFrameDuration = 0; // Left duration of the current frame
@@ -45,7 +49,6 @@ void processFrameTransmission();
 int infoPin = 13;
 // ========
 
-
 void setup() {
     // Animation setup
     pinMode(latchPin, OUTPUT);
@@ -61,6 +64,14 @@ void loop() {
 
     // Load next frame, when it's over
     if (curFrameDuration < 1) {
+        // Restart animation, if the end is reached
+        if (isEndFlag(nextFrameId)) {
+            // Write default clip into EEPROM, if there is no clip stored
+            if (nextFrameId == 0) {
+                writeDefaultClip();
+            }
+            restartAnimation();
+        }
         loadFrame(nextFrameId);
         nextFrameId++;
     }
@@ -95,7 +106,7 @@ void serialEvent() {
 void loadFrame(int i) {
 
     int startAddr = i * FRAME_SIZE;
-    byte durationBuffer = EEPROM.read(startAddr);
+    unsigned byte durationBuffer = EEPROM.read(startAddr);
     curFrameDuration = (durationBuffer << 2) + (EEPROM.read(startAddr + 1) >> 6);
 
     // Load next frame, by masking the necessary bits (bit flip is needed, because the shift register for the lines is a sink and needs to put to LOW)
@@ -107,12 +118,129 @@ void loadFrame(int i) {
 }
 
 /**
+ * Saves a frame at desired position
+ *
+ * \param frameId index (position) of the frame
+ * \param frame the frame that should be written in
+ */
+void saveFrame(int frameId, unsigned byte* frame) {
+    for (unsigned byte i = 0; i < FRAME_SIZE; i++) {
+        EEPROM.write(frameId * FRAME_SIZE + i, frame[i]);
+    }
+}
+
+/**
+ * Sets end of clip at desired position
+ *
+ * \param frameId index (position) of end frame
+ */
+void setEndFlag(int frameId) {
+    EEPROM.write(frameId * FRAME_SIZE, 0);
+    EEPROM.write(frameId * FRAME_SIZE + 1, 0);
+}
+
+/**
  * Restarts the animation
  */
 void restartAnimation() {
     curFrameDuration = 0;
     nextFrameId = 0;
     lastStepTime = millis();
+}
+
+/**
+ * Checks whether the end of clip is reached
+ *
+ * \param frameId index of the frame that should be checked
+ * \return true if it's the end flag
+ */
+bool isEndFlag(int frameId) {
+    int startAddr = frameId * FRAME_SIZE;
+    return ((EEPROM.read(startAddr) << 8) + EEPROM.read(startAddr + 1)) == 0;
+}
+
+/**
+ * Writes a default clip into EEPROM
+ */
+void writeDefaultClip() {
+    unsigned byte frame[5];
+
+    // Blink line by line
+    frame[1] = 255;
+    saveFrame(0, frame);
+    for (int j = 0; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
+
+    frame[1] = 3 << 6;
+    frame[2] = 63 << 2;
+    saveFrame(1, frame);
+    for (int j = 0; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
+
+    frame[1] = 3 << 6;
+    frame[2] = 2;
+    frame[3] = 15 << 4;
+    saveFrame(2, frame);
+    for (int j = 0; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
+
+    frame[1] = 3 << 6;
+    frame[3] = 15;
+    frame[4] = 2 << 6;
+    saveFrame(3, frame);
+    for (int j = 0; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
+
+    frame[4] = 63;
+    saveFrame(4, frame);
+    for (int j = 0; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
+
+    // Blink col by col
+    frame[1] = (3 << 6) + 1;
+    frame[2] = 1 << 2;
+    frame[3] = 1 << 4;
+    frame[4] = (1 << 6) + 1;
+    saveFrame(5, frame);
+    for (int j = 0; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
+
+    frame[1] = (3 << 6) + (1 << 1);
+    frame[2] = 1 << 3;
+    frame[3] = 1 << 5;
+    frame[4] = (1 << 7) + (1 << 1);
+    saveFrame(6, frame);
+    for (int j = 0; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
+
+    frame[1] = (3 << 6) + (1 << 2);
+    frame[2] = 1 << 4;
+    frame[3] = (1 << 6) + 1;
+    frame[4] = 1 << 2;
+    saveFrame(7, frame);
+    for (int j = 0; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
+
+    frame[1] = (3 << 6) + (1 << 3);
+    frame[2] = 1 << 5;
+    frame[3] = (1 << 7) + (1 << 1);
+    frame[4] = 1 << 3;
+    saveFrame(8, frame);
+    for (int j = 0; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
+
+    frame[1] = (3 << 6) + (1 << 4);
+    frame[2] = (1 << 6) + 1;
+    frame[3] = 1 << 2;
+    frame[4] = 1 << 4;
+    saveFrame(9, frame);
+    for (int j = 0; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
+
+    frame[1] = (3 << 6) + (1 << 5);
+    frame[2] = (1 << 6) + (1 << 1);
+    frame[3] = 1 << 3;
+    frame[4] = 1 << 5;
+    saveFrame(10, frame);
+    for (int j = 0; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
+
+    // All off
+    frame[1] = 3 << 6;
+    saveFrame(11, frame);
+
+    // All on for about 3 seconds
+    frame[0] = 3;
+    for (int j = 1; j < FRAME_SIZE; j++) frame[j] = 255;
 }
 
 // ========
@@ -167,15 +295,12 @@ void processClipTransmission() {
         frame[4] = Serial.read();
 
         // Write complete frame into EEPROM
-        for (unsigned byte i = 0; i < FRAME_SIZE; i++) {
-            EEPROM.write(frameId * FRAME_SIZE + i, frame[i]);
-        }
+        saveFrame(frameId, frame);
         frameId++;
     }
 
     // Set end flag for animation
-    EEPROM.write(frameId * FRAME_SIZE, 0);
-    EEPROM.write(frameId * FRAME_SIZE + 1, 0);
+    setEndFlag(frameId);
 
     Serial.write("done"); // Say client that all is done
 
