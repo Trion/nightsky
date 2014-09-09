@@ -21,15 +21,15 @@
 // === Animation management ===
 void restartAnimation();
 void loadFrame(int i);
-void saveFrame(int frameId, unsigned byte* frame);
+void saveFrame(int frameId, byte* frame);
 void setEndFlag(int frameId);
 bool isEndFlag(int frameId);
 void writeDefaultClip();
 
 // Current frame state
 unsigned short curFrameDuration = 0; // Left duration of the current frame
-unsigned byte curFrame[LINE_AMOUNT]; // Current frame (one byte is one line)
-unsigned byte curLine = 0; // Id of the line, that should be currently on
+byte curFrame[LINE_AMOUNT]; // Current frame (one byte is one line)
+byte curLine = 0; // Id of the line, that should be currently on
 unsigned short nextFrameId = 0; // Id of the next frame
 
 // Timestamp of the last step
@@ -44,7 +44,7 @@ int dataPin = 11; // Pin connected to DS of 74HC595
 // === Transmission ===
 void processRequest();
 void processPing();
-void processFrameTransmission();
+void processClipTransmission();
 // Pin to indicate whether transmission is in progress
 int infoPin = 13;
 // ========
@@ -106,7 +106,7 @@ void serialEvent() {
 void loadFrame(int i) {
 
     int startAddr = i * FRAME_SIZE;
-    unsigned byte durationBuffer = EEPROM.read(startAddr);
+    byte durationBuffer = EEPROM.read(startAddr);
     curFrameDuration = (durationBuffer << 2) + (EEPROM.read(startAddr + 1) >> 6);
 
     // Load next frame, by masking the necessary bits (bit flip is needed, because the shift register for the lines is a sink and needs to put to LOW)
@@ -123,8 +123,8 @@ void loadFrame(int i) {
  * \param frameId index (position) of the frame
  * \param frame the frame that should be written in
  */
-void saveFrame(int frameId, unsigned byte* frame) {
-    for (unsigned byte i = 0; i < FRAME_SIZE; i++) {
+void saveFrame(int frameId, byte* frame) {
+    for (byte i = 0; i < FRAME_SIZE; i++) {
         EEPROM.write(frameId * FRAME_SIZE + i, frame[i]);
     }
 }
@@ -163,7 +163,7 @@ bool isEndFlag(int frameId) {
  * Writes a default clip into EEPROM
  */
 void writeDefaultClip() {
-    unsigned byte frame[5];
+    byte frame[5];
 
     // Blink line by line
     frame[1] = 255;
@@ -255,14 +255,14 @@ void processRequest() {
 
     // Get initial message
     char msg[5];
-    for (unsigned byte i = 0; i < 3; i++) {
+    for (byte i = 0; i < 3; i++) {
         msg[i] = Serial.read();
     }
     msg[4] = '\0';
 
     // Determine request type
     if (strcmp(msg, "helo") == 0) {
-        processFrameTransmission();
+        processClipTransmission();
     } else if (strcmp(msg, "ping") == 0) {
         processPing();
     }
