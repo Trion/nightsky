@@ -79,6 +79,7 @@ void loop() {
     // Render current line
     digitalWrite(latchPin, LOW);
     shiftOut(dataPin, clockPin, MSBFIRST, curFrame[curLine]); // Shift in activated cols of the line
+   
     shiftOut(dataPin, clockPin, MSBFIRST, 1 << (curLine + LINE_OFFSET)); // Shift in the current line
     digitalWrite(latchPin, HIGH);
 
@@ -110,11 +111,16 @@ void loadFrame(int i) {
     curFrameDuration = (durationBuffer << 2) + (EEPROM.read(startAddr + 1) >> 6);
 
     // Load next frame, by masking the necessary bits (bit flip is needed, because the shift register for the lines is a sink and needs to put to LOW)
-    curFrame[0] = ~(EEPROM.read(startAddr + 1) & 63); // 63 = 00111111
-    curFrame[1] = ~(EEPROM.read(startAddr + 2) >> 2);
-    curFrame[2] = ~(((EEPROM.read(startAddr + 2) & 3) << 4) + (EEPROM.read(startAddr + 3) >> 4));
-    curFrame[3] = ~(((EEPROM.read(startAddr + 3) & 15) << 2) + (EEPROM.read(startAddr + 4) >> 6));
-    curFrame[4] = ~(EEPROM.read(startAddr + 4) & 63);
+    curFrame[0] = EEPROM.read(startAddr + 1) & 63; // 63 = 00111111
+    curFrame[1] = EEPROM.read(startAddr + 2) >> 2;
+    curFrame[2] = ((EEPROM.read(startAddr + 2) & 3) << 4) + (EEPROM.read(startAddr + 3) >> 4);
+    curFrame[3] = ((EEPROM.read(startAddr + 3) & 15) << 2) + (EEPROM.read(startAddr + 4) >> 6);
+    curFrame[4] = EEPROM.read(startAddr + 4) & 63;
+
+    // Put the bits to right position according to the line offset and flip them, because the cols needs to be LOW to be on
+    for (unsigned short j = 0; j < LINE_AMOUNT; j++) {
+        curFrame[j] = ~(curFrame[j] << LINE_OFFSET);
+    }
 }
 
 /**
@@ -163,33 +169,37 @@ bool isEndFlag(int frameId) {
  * Writes a default clip into EEPROM
  */
 void writeDefaultClip() {
+    digitalWrite(infoPin, HIGH); // Indicating that there is some processing
+
     byte frame[5];
+    for (int j = 0; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
 
     // Blink line by line
     frame[1] = 255;
     saveFrame(0, frame);
-    for (int j = 0; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
+    for (int j = 1; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
 
     frame[1] = 3 << 6;
     frame[2] = 63 << 2;
     saveFrame(1, frame);
-    for (int j = 0; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
+    for (int j = 1; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
 
     frame[1] = 3 << 6;
-    frame[2] = 2;
+    frame[2] = 3;
     frame[3] = 15 << 4;
     saveFrame(2, frame);
-    for (int j = 0; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
+    for (int j = 1; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
 
     frame[1] = 3 << 6;
     frame[3] = 15;
-    frame[4] = 2 << 6;
+    frame[4] = 3 << 6;
     saveFrame(3, frame);
-    for (int j = 0; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
+    for (int j = 1; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
 
+    frame[1] = 3 << 6;
     frame[4] = 63;
     saveFrame(4, frame);
-    for (int j = 0; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
+    for (int j = 1; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
 
     // Blink col by col
     frame[1] = (3 << 6) + 1;
@@ -197,42 +207,42 @@ void writeDefaultClip() {
     frame[3] = 1 << 4;
     frame[4] = (1 << 6) + 1;
     saveFrame(5, frame);
-    for (int j = 0; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
+    for (int j = 1; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
 
     frame[1] = (3 << 6) + (1 << 1);
     frame[2] = 1 << 3;
     frame[3] = 1 << 5;
     frame[4] = (1 << 7) + (1 << 1);
     saveFrame(6, frame);
-    for (int j = 0; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
+    for (int j = 1; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
 
     frame[1] = (3 << 6) + (1 << 2);
     frame[2] = 1 << 4;
     frame[3] = (1 << 6) + 1;
     frame[4] = 1 << 2;
     saveFrame(7, frame);
-    for (int j = 0; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
+    for (int j = 1; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
 
     frame[1] = (3 << 6) + (1 << 3);
     frame[2] = 1 << 5;
     frame[3] = (1 << 7) + (1 << 1);
     frame[4] = 1 << 3;
     saveFrame(8, frame);
-    for (int j = 0; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
+    for (int j = 1; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
 
     frame[1] = (3 << 6) + (1 << 4);
     frame[2] = (1 << 6) + 1;
     frame[3] = 1 << 2;
     frame[4] = 1 << 4;
     saveFrame(9, frame);
-    for (int j = 0; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
+    for (int j = 1; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
 
     frame[1] = (3 << 6) + (1 << 5);
-    frame[2] = (1 << 6) + (1 << 1);
+    frame[2] = (1 << 7) + (1 << 1);
     frame[3] = 1 << 3;
     frame[4] = 1 << 5;
     saveFrame(10, frame);
-    for (int j = 0; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
+    for (int j = 1; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
 
     // All off
     frame[1] = 3 << 6;
@@ -241,6 +251,11 @@ void writeDefaultClip() {
     // All on for about 3 seconds
     frame[0] = 3;
     for (int j = 1; j < FRAME_SIZE; j++) frame[j] = 255;
+    saveFrame(12, frame);
+
+    setEndFlag(13);
+
+    digitalWrite(infoPin, LOW);
 }
 
 // ========
