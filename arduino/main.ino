@@ -78,8 +78,7 @@ void loop() {
 
     // Render current line
     digitalWrite(latchPin, LOW);
-    shiftOut(dataPin, clockPin, MSBFIRST, curFrame[curLine]); // Shift in activated cols of the line
-   
+    shiftOut(dataPin, clockPin, MSBFIRST, curFrame[curLine]); // Shift in activated cols of the line 
     shiftOut(dataPin, clockPin, MSBFIRST, 1 << (curLine + LINE_OFFSET)); // Shift in the current line
     digitalWrite(latchPin, HIGH);
 

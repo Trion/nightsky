@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Nightsky</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -135,7 +135,10 @@
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionOpen">
    <property name="text">
-    <string>Open (crtl+o)</string>
+    <string>Open</string>
+   </property>
+   <property name="toolTip">
+    <string>Open</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+O</string>
@@ -143,7 +146,10 @@
   </action>
   <action name="actionSave">
    <property name="text">
-    <string>Save (ctrl + s)</string>
+    <string>Save</string>
+   </property>
+   <property name="toolTip">
+    <string>Save</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+S</string>
@@ -151,7 +157,10 @@
   </action>
   <action name="actionSave_as">
    <property name="text">
-    <string>Save as (ctrl + shift + s)</string>
+    <string>Save as</string>
+   </property>
+   <property name="toolTip">
+    <string>Save as</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+S</string>
