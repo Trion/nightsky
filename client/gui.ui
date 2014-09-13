@@ -16,7 +16,40 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout_2">
     <item>
-     <widget class="QGraphicsView" name="starCanvas"/>
+     <widget class="QGraphicsView" name="starCanvas">
+      <property name="backgroundBrush">
+       <brush brushstyle="SolidPattern">
+        <color alpha="255">
+         <red>10</red>
+         <green>10</green>
+         <blue>10</blue>
+        </color>
+       </brush>
+      </property>
+      <property name="foregroundBrush">
+       <brush brushstyle="NoBrush">
+        <color alpha="255">
+         <red>0</red>
+         <green>0</green>
+         <blue>0</blue>
+        </color>
+       </brush>
+      </property>
+      <property name="sceneRect">
+       <rectf>
+        <x>0.000000000000000</x>
+        <y>0.000000000000000</y>
+        <width>0.000000000000000</width>
+        <height>0.000000000000000</height>
+       </rectf>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+      </property>
+      <property name="viewportUpdateMode">
+       <enum>QGraphicsView::MinimalViewportUpdate</enum>
+      </property>
+     </widget>
     </item>
     <item>
      <widget class="QWidget" name="frameManagerWidget" native="true">
