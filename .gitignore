@@ -1,2 +1,3 @@
 arduino/build-uno/
 */__pycache__
+*.pyc

@@ -44,11 +44,12 @@ class Clip:
         """
 
         self.filePath = filePath
-        self.curFrame = 0
+        self.curFrame = -1
         self.frames = []
         if filePath != None:
             self.load(filePath)
 
+    # ==== Frame management ====
     def setActiveFrame(self, frameId):
         """
         change the currently active frame
@@ -80,6 +81,42 @@ class Clip:
 
         self.setActiveFrame(self.curFrame-1)
 
+    def moveFrame(self, newPos):
+        """
+        Moves the current frame to the new position. If the new position is out of bound, the frame will be put to the end respectively to the beginning of the frame list
+
+        @param newPos index of the new position
+        """
+
+        # Move the frame
+        frame = self.frames[self.curFrame]
+        del self.frames[self.curFrame]
+        self.frames.inser(newPos, frame)
+
+        # Set current frame to the new position
+        if newPos < 0:
+            self.curFrame = 0
+        elif newPos > len(self.frames) - 1:
+            self.curFrame = len(self.frames) - 1
+        else:
+            self.curFrame = newPos
+
+    def addFrame(self):
+        """
+        adds a new frame
+        """
+
+        setup = [False for i in range(30)]
+        self.frames.append(Frame(setup))
+
+    def copyFrame(self):
+        """
+        copies the current frame and add the copy directly after the current frame
+        """
+
+        frame = self.frames[self.curFrame].copy()
+        self.frames.insert(self.curFrame+1, frame)
+
     def setStar(self, starId, state):
         """
         sets the state of the star with starId in the current frame
@@ -102,6 +139,7 @@ class Clip:
         state = self.frames[self.curFrame].getStarState(starId)
         self.setStar(starId, not state)
 
+    # === Export/Import ===
     def save(self, filePath=None):
         """
         saves the clip into a json file
@@ -111,7 +149,7 @@ class Clip:
 
         # Check file path
         if filePath == None and self.filePath == None:
-            raise self.__class__.StarOutOfBoundException()
+            raise self.__class__.NoFilePathException()
 
         if filePath != None:
             self.filePath = filePath
@@ -206,9 +244,7 @@ class Frame:
         @param setup list of stars which are on or off (setup[1] = true means star with Id 1 is on)
         """
 
-        self.stars = []
-        for state in setup:
-            self.stars.append(Star(state))
+        self.stars = [Star(state) for state in setup]
 
     def getStarState(self, starId):
         """
