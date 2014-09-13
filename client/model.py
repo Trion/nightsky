@@ -5,6 +5,7 @@ models to represent the clip
 import json
 from array import array
 
+
 class Clip:
     """
     Represents a clip
@@ -46,7 +47,7 @@ class Clip:
         self.filePath = filePath
         self.curFrame = -1
         self.frames = []
-        if filePath != None:
+        if filePath is not None:
             self.load(filePath)
 
     # ==== Frame management ====
@@ -83,7 +84,8 @@ class Clip:
 
     def moveFrame(self, newPos):
         """
-        Moves the current frame to the new position. If the new position is out of bound, the frame will be put to the end respectively to the beginning of the frame list
+        Moves the current frame to the new position.
+        If the new position is out of bound, the frame will be put to the end respectively to the beginning of the frame list
 
         @param newPos index of the new position
         """
@@ -148,10 +150,10 @@ class Clip:
         """
 
         # Check file path
-        if filePath == None and self.filePath == None:
+        if filePath is None and self.filePath is None:
             raise self.__class__.NoFilePathException()
 
-        if filePath != None:
+        if filePath is not None:
             self.filePath = filePath
 
         # Generate data dump for serialization
@@ -208,7 +210,7 @@ class Clip:
             else:
                 packedFrame = setup + (curFrameDuration << 30)
                 # Convert to bytes
-                byteArr = array('B') # Create array with unsigned chars
+                byteArr = array('B')  # Create array with unsigned chars
                 for i in range(5):
                     byteArr.append((packedFrame >> (i * 8)) & 0b11111111)
                 exportedFrames.append(bytes(byteArr))
@@ -235,7 +237,6 @@ class Frame:
             """
 
             super().__init__(self, 'Star {0:d} is out of bound'.format(starId))
-
 
     def __init__(self, setup=[]):
         """

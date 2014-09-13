@@ -2,11 +2,11 @@
 basic gui
 """
 
-from PyQt5.QtWidgets import QApplication, QPushButton, QListWidget, QGraphicsView, QListWidgetItem, QGraphicsScene, QFileDialog, QAction
-#from PyQt5.QtGui import QBrush, QColor
+from PyQt5.QtWidgets import QPushButton, QListWidget, QGraphicsView, QListWidgetItem, QGraphicsScene, QFileDialog, QAction
 from PyQt5.uic import loadUi
 from os.path import expanduser, dirname, basename, isfile
 from model import Clip
+
 
 class GUI:
     """
@@ -23,7 +23,7 @@ class GUI:
 
         self.app = app
         self.clip = Clip()
-        self.changed = False # Indicates whether the file has been changed
+        self.changed = False  # Indicates whether the file has been changed
 
         self.ui = loadUi(guiFilePath)
         self.__initRightSidebar()
@@ -75,7 +75,7 @@ class GUI:
         if self.clip.filePath:
             startDir = dirname(self.clip.filePath)
 
-        filePath = QFileDialog.getOpenFileName(self.ui, self.ui.tr('Open Nightsky Clip'), startDir, self.ui.tr('Nightsky Clip Files (*.nsc)'))[0];
+        filePath = QFileDialog.getOpenFileName(self.ui, self.ui.tr('Open Nightsky Clip'), startDir, self.ui.tr('Nightsky Clip Files (*.nsc)'))[0]
 
         # Load file
         try:
@@ -95,7 +95,7 @@ class GUI:
         if self.clip.filePath:
             startFilePath = self.clip.filePath
 
-        filePath = QFileDialog.getSaveFileName(self.ui, self.ui.tr('Save Nightsky Clip'), startFilePath, self.ui.tr('Nightsky Clip Files (*.nsc)'))[0];
+        filePath = QFileDialog.getSaveFileName(self.ui, self.ui.tr('Save Nightsky Clip'), startFilePath, self.ui.tr('Nightsky Clip Files (*.nsc)'))[0]
 
         fileName = basename(filePath)
         if (fileName != ''):
