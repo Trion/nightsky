@@ -2,9 +2,10 @@
 basic gui
 """
 
-from PyQt5.QtWidgets import QPushButton, QListWidget, QGraphicsView, QListWidgetItem, QGraphicsScene, QFileDialog, QAction
+from PyQt5.QtWidgets import QPushButton, QListWidget, QGraphicsView,\
+    QListWidgetItem, QGraphicsScene, QFileDialog, QAction
 from PyQt5.uic import loadUi
-from os.path import expanduser, dirname, basename, isfile
+from os.path import expanduser, dirname, basename
 from model import Clip
 
 
@@ -38,7 +39,7 @@ class GUI:
 
     def __initRightSidebar(self):
         """
-        initiates the widgets of the right sidebar
+        Initiates the widgets of the right sidebar.
         """
 
         addFrameButton = self.ui.findChild(QPushButton, 'addButton')
@@ -57,11 +58,9 @@ class GUI:
         self.frameList = self.ui.findChild(QListWidget, 'frameList')
         self.frameList.currentRowChanged.connect(self.frameListChangeRow)
 
-        #self.addFrameButton.clicked.connect(self.test)
-
     def __initTopBar(self):
         """
-        initiates the top bar
+        Initiates the top bar.
         """
         openActionButton = self.ui.findChild(QAction, 'actionOpen')
         openActionButton.triggered.connect(self.actionOpenNsc)
@@ -76,7 +75,7 @@ class GUI:
 
     def actionOpenNsc(self, event):
         """
-        opens a nightsky clip file
+        Opens a nightsky clip file.
 
         @param event QEvent object of the event
         """
@@ -85,7 +84,9 @@ class GUI:
         if self.clip.filePath:
             startDir = dirname(self.clip.filePath)
 
-        filePath = QFileDialog.getOpenFileName(self.ui, self.ui.tr('Open Nightsky Clip'), startDir, self.ui.tr('Nightsky Clip Files (*.nsc)'))[0]
+        filePath = QFileDialog.getOpenFileName(
+            self.ui, self.ui.tr('Open Nightsky Clip'), startDir,
+            self.ui.tr('Nightsky Clip Files (*.nsc)'))[0]
 
         # Load file
         try:
@@ -97,7 +98,7 @@ class GUI:
 
     def actionSaveAsNsc(self, event):
         """
-        saves a nightsky clip file
+        Saves a nightsky clip file.
 
         @param event QEvent object of the event
         """
@@ -106,7 +107,9 @@ class GUI:
         if self.clip.filePath:
             startFilePath = self.clip.filePath
 
-        filePath = QFileDialog.getSaveFileName(self.ui, self.ui.tr('Save Nightsky Clip'), startFilePath, self.ui.tr('Nightsky Clip Files (*.nsc)'))[0]
+        filePath = QFileDialog.getSaveFileName(
+            self.ui, self.ui.tr('Save Nightsky Clip'), startFilePath,
+            self.ui.tr('Nightsky Clip Files (*.nsc)'))[0]
 
         fileName = basename(filePath)
         if (fileName != ''):
@@ -118,7 +121,7 @@ class GUI:
 
     def actionSaveNsc(self, event):
         """
-        saves a nightsky clip file, if there is already a filename
+        Saves a nightsky clip file, if there is already a filename.
 
         @param event QEvent object of the event
         """
@@ -134,7 +137,7 @@ class GUI:
 
     def updateFrameList(self):
         """
-        updates the frame list
+        Updates the frame list.
         """
 
         self.frameList.clear()
@@ -146,7 +149,7 @@ class GUI:
 
     def frameListChangeRow(self, row):
         """
-        event handler for changing active row
+        Event handler for changing active row.
 
         @param row the new current row
         """
@@ -159,7 +162,7 @@ class GUI:
 
     def buttonAddFrame(self, event):
         """
-        adds a new frame
+        Adds a new frame.
         """
 
         if self.clip.size == 0:
@@ -167,9 +170,11 @@ class GUI:
         else:
             newPos = self.frameList.currentRow() + 1
 
-        self.clip.addFrame()
-        self.clip.setActiveFrame(self.clip.size - 1)
-        self.clip.moveFrame(newPos)
+        self.clip.insertFrame(newPos)
+        if newPos == 0:
+            self.clip.setActiveFrame(newPos)
+        else:
+            self.clip.setActiveFrame(newPos - 1)
         self.updateFrameList()
 
     def buttonNextFrame(self, event):
