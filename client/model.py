@@ -1,5 +1,5 @@
 """
-models to represent the clip
+Models to represent the clip
 """
 
 import json
@@ -13,7 +13,7 @@ class Clip:
 
     class FrameIdOutOfBoundException(Exception):
         """
-        Exception for frame ids, which are out of bound
+        Exception for frame ids, which are out of bound.
         """
 
         def __init__(self, frameId):
@@ -22,8 +22,8 @@ class Clip:
 
             @param frameId id you tried to access
             """
-
-            super().__init__(self, 'Frame {0:d} is out of bound'.format(frameId))
+            super().__init__(self,
+                             'Frame {0:d} is out of bound.'.format(frameId))
 
     class NoFilePathException(Exception):
         """
@@ -34,8 +34,7 @@ class Clip:
             """
             constructor
             """
-
-            super().__init__(self, 'Missing file path')
+            super().__init__(self, 'Missing file path.')
 
     def __init__(self, filePath=None):
         """
@@ -43,7 +42,6 @@ class Clip:
 
         @param filePath name of file, where a clip could be saved
         """
-
         self.filePath = filePath
         self.curFrame = -1
         self.frames = []
@@ -57,7 +55,6 @@ class Clip:
 
         @return the amount of frames
         """
-
         return len(self.frames)
 
     @property
@@ -65,7 +62,6 @@ class Clip:
         """
         returns the Id of the currently active frame
         """
-
         return self.curFrame
 
     # ==== Frame management ====
@@ -88,7 +84,6 @@ class Clip:
 
         @raise FrameIdOutOfBoundException end of clip
         """
-
         self.setActiveFrame(self.curFrame+1)
 
     def prevFrame(self):
@@ -97,13 +92,13 @@ class Clip:
 
         @raise FrameIdOutOfBoundException end of clip
         """
-
         self.setActiveFrame(self.curFrame-1)
 
     def moveFrame(self, newPos):
         """
         Moves the current frame to the new position.
-        If the new position is out of bound, the frame will be put to the end respectively to the beginning of the frame list
+        If the new position is out of bound, the frame will be put to the end
+        respectively to the beginning of the frame list.
 
         @param newPos index of the new position
         """
@@ -121,19 +116,41 @@ class Clip:
         else:
             self.curFrame = newPos
 
+    def moveFrameUp(self):
+        """
+        Moves the currently active frame up.
+        If the active frame is the first one, nothing happens.
+        """
+        self.moveFrame(self.curFrame-1)
+
+    def moveFrameDown(self):
+        """
+        Moves the currently active frame down.
+        If the active frame is the last one, nothing happens.
+        """
+        self.moveFrame(self.curFrame+1)
+
     def addFrame(self):
         """
         adds a new frame
         """
-
         setup = [False for i in range(30)]
         self.frames.append(Frame(setup))
 
+    def insertFrame(self, pos):
+        """
+        Inserts a new frame at the desired position.
+
+        @param pos position of the new frame as index
+        """
+        setup = [False for i in range(30)]
+        self.frames.insert(pos, Frame(setup))
+
     def copyFrame(self):
         """
-        copies the current frame and add the copy directly after the current frame
+        Copies the current frame and add the copy directly after the current
+        frame.
         """
-
         frame = self.frames[self.curFrame].copy()
         self.frames.insert(self.curFrame+1, frame)
 
@@ -145,7 +162,6 @@ class Clip:
         @param state True for star is on and False for star is off
         @raise StarOutOfBoundException starId doesn't exist
         """
-
         self.frames[self.curFrame].setStar(starId, state)
 
     def toggleStar(self, starId):
@@ -155,7 +171,6 @@ class Clip:
         @param starId id of the star
         @raise StarOutOfBoundException starId doesn't exist
         """
-
         state = self.frames[self.curFrame].getStarState(starId)
         self.setStar(starId, not state)
 
@@ -164,7 +179,8 @@ class Clip:
         """
         saves the clip into a json file
 
-        @param filePath optional new filePath; if none is given, the current filePath is used
+        @param filePath optional new filePath; if none is given, the
+        current filePath is used
         """
 
         # Check file path
@@ -239,12 +255,12 @@ class Clip:
 
 class Frame:
     """
-    Represents a frame (single image) within a clip (animation)
+    Represents a frame (single image) within a clip (animation).
     """
 
     class StarOutOfBoundException(Exception):
         """
-        Exception for stars that doesn't exist
+        Exception for stars that doesn't exist.
         """
 
         def __init__(self, starId):
@@ -253,21 +269,21 @@ class Frame:
 
             @param starId id you tried to access
             """
-
             super().__init__(self, 'Star {0:d} is out of bound'.format(starId))
 
     def __init__(self, setup=[]):
         """
         constructor
 
-        @param setup list of stars which are on or off (setup[1] = true means star with Id 1 is on)
+        @param setup list of stars which are on or off (setup[1] = true means
+        star with Id 1 is on)
         """
 
         self.stars = [Star(state) for state in setup]
 
     def getStarState(self, starId):
         """
-        returns the state of the desired star
+        Returns the state of the desired star.
 
         @param starId id of the star
         @return True if star is on and False if star is off
@@ -281,7 +297,8 @@ class Frame:
 
     def export(self):
         """
-        exports the star setup of the frame as integer (1 at position x means, that star x is on)
+        Exports the star setup of the frame as integer (1 at position x means,
+        that star x is on).
 
         @return the setup as integer
         """
@@ -299,7 +316,7 @@ class Frame:
 
 class Star:
     """
-    Represents a star
+    Represents a star.
     """
 
     def __init__(self, isOn=False):
