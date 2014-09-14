@@ -50,6 +50,24 @@ class Clip:
         if filePath is not None:
             self.load(filePath)
 
+    @property
+    def size(self):
+        """
+        returns the number of frames within the clip
+
+        @return the amount of frames
+        """
+
+        return len(self.frames)
+
+    @property
+    def activeFrame(self):
+        """
+        returns the Id of the currently active frame
+        """
+
+        return self.curFrame
+
     # ==== Frame management ====
     def setActiveFrame(self, frameId):
         """
@@ -93,7 +111,7 @@ class Clip:
         # Move the frame
         frame = self.frames[self.curFrame]
         del self.frames[self.curFrame]
-        self.frames.inser(newPos, frame)
+        self.frames.insert(newPos, frame)
 
         # Set current frame to the new position
         if newPos < 0:

@@ -68,30 +68,6 @@
         </widget>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="line1">
-         <item>
-          <widget class="QPushButton" name="deleteButton">
-           <property name="text">
-            <string>delete</string>
-           </property>
-           <property name="shortcut">
-            <string>Del</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="addButton">
-           <property name="text">
-            <string>add</string>
-           </property>
-           <property name="shortcut">
-            <string>Ctrl++</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
         <layout class="QHBoxLayout" name="line2">
          <item>
           <widget class="QPushButton" name="prevButton">
@@ -110,6 +86,30 @@
            </property>
            <property name="shortcut">
             <string>Down</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="line1">
+         <item>
+          <widget class="QPushButton" name="deleteButton">
+           <property name="text">
+            <string>delete</string>
+           </property>
+           <property name="shortcut">
+            <string>Del</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="addButton">
+           <property name="text">
+            <string>add</string>
+           </property>
+           <property name="shortcut">
+            <string>Ctrl++</string>
            </property>
           </widget>
          </item>
@@ -260,6 +260,16 @@
    </property>
   </action>
  </widget>
+ <tabstops>
+  <tabstop>starCanvas</tabstop>
+  <tabstop>frameList</tabstop>
+  <tabstop>prevButton</tabstop>
+  <tabstop>nextButton</tabstop>
+  <tabstop>deleteButton</tabstop>
+  <tabstop>addButton</tabstop>
+  <tabstop>moveDownButton</tabstop>
+  <tabstop>upButton</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>
