@@ -150,9 +150,31 @@ class Clip:
         """
         Copies the current frame and add the copy directly after the current
         frame.
+        Has no effect if the clip is empty.
         """
-        frame = self.frames[self.curFrame].copy()
-        self.frames.insert(self.curFrame+1, frame)
+
+        if self.size != 0:
+            frame = self.frames[self.curFrame].copy()
+            self.frames.insert(self.curFrame+1, frame)
+
+    def removeFrame(self, frameId):
+        """
+        Removes the desired frame.
+
+        @param frameId the id of the frame, that should be removed
+        """
+
+        if frameId < 0 or frameId >= self.size:
+            raise self.__class__.FrameIdOutOfBoundException
+
+        if frameId <= self.curFrame:
+            self.curFrame -= 1
+
+        # Correct active frame if clip is not empty
+        if self.curFrame == -1 and self.size != 0:
+            self.curFrame = 0
+
+        del self.frames[frameId]
 
     def setStar(self, starId, state):
         """
@@ -312,6 +334,13 @@ class Frame:
             i += 1
 
         return setup
+
+    def copy(self):
+        """
+        Returns a hard copy of this frame.
+        """
+        setup = [star.isOn for star in self.stars]
+        return Frame(setup)
 
 
 class Star:

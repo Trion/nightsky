@@ -42,21 +42,32 @@ class GUI:
         Initiates the widgets of the right sidebar.
         """
 
-        addFrameButton = self.ui.findChild(QPushButton, 'addButton')
-        addFrameButton.clicked.connect(self.buttonAddFrame)
-
         nextFrameButton = self.ui.findChild(QPushButton, 'nextButton')
         nextFrameButton.clicked.connect(self.buttonNextFrame)
 
         prevFrameButton = self.ui.findChild(QPushButton, 'prevButton')
         prevFrameButton.clicked.connect(self.buttonPrevFrame)
 
-        self.delFrameButton = self.ui.findChild(QPushButton, 'deleteButton')
-        self.moveUpButton = self.ui.findChild(QPushButton, 'moveUpButton')
-        self.moveDownButton = self.ui.findChild(QPushButton, 'moveDownButton')
+        addFrameButton = self.ui.findChild(QPushButton, 'addButton')
+        addFrameButton.clicked.connect(self.buttonAddFrame)
+
+        copyFrameButton = self.ui.findChild(QPushButton, 'copyButton')
+        copyFrameButton.clicked.connect(self.buttonCopyFrame)
+
+        delFrameButton = self.ui.findChild(QPushButton, 'deleteButton')
+        delFrameButton.clicked.connect(self.buttonDeleteFrame)
+
+        moveUpButton = self.ui.findChild(QPushButton, 'moveUpButton')
+        moveUpButton.clicked.connect(self.buttonMoveUp)
+
+        moveDownButton = self.ui.findChild(QPushButton, 'moveDownButton')
+        moveDownButton.clicked.connect(self.buttonMoveDown)
 
         self.frameList = self.ui.findChild(QListWidget, 'frameList')
         self.frameList.currentRowChanged.connect(self.frameListChangeRow)
+        # Setup drag and drop support
+        frameListModel = self.frameList.model()
+        frameListModel.rowsMoved.connect(self.frameListMoveFrame)
 
     def __initTopBar(self):
         """
@@ -160,6 +171,16 @@ class GUI:
             # On updateFrameList row is -1
             pass
 
+    def frameListMoveFrame(self, event):
+        """
+        Moves a frame by a drag and drop event.
+        """
+
+        # Well, thats pretty ugly, but the easiest way for my intentions
+        newPos = self.frameList.currentRow()
+        self.clip.moveFrame(newPos)
+        self.updateFrameList()
+
     def buttonAddFrame(self, event):
         """
         Adds a new frame.
@@ -199,4 +220,32 @@ class GUI:
             self.clip.prevFrame()
         except Clip.FrameIdOutOfBoundException:
             pass
+        self.updateFrameList()
+
+    def buttonDeleteFrame(self, event):
+        """
+        Removes the currently active frame.
+        """
+        self.clip.removeFrame(self.clip.activeFrame)
+        self.updateFrameList()
+
+    def buttonCopyFrame(self, event):
+        """
+        Copies the currently active frame.
+        """
+        self.clip.copyFrame()
+        self.updateFrameList()
+
+    def buttonMoveUp(self):
+        """
+        Moves the currently active frame down.
+        """
+        self.clip.moveFrameUp()
+        self.updateFrameList()
+
+    def buttonMoveDown(self):
+        """
+        Moves the currently active frame up.
+        """
+        self.clip.moveFrameDown()
         self.updateFrameList()

@@ -65,10 +65,16 @@
          <property name="dragEnabled">
           <bool>true</bool>
          </property>
+         <property name="dragDropMode">
+          <enum>QAbstractItemView::InternalMove</enum>
+         </property>
+         <property name="defaultDropAction">
+          <enum>Qt::TargetMoveAction</enum>
+         </property>
         </widget>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="line2">
+        <layout class="QHBoxLayout" name="line1">
          <item>
           <widget class="QPushButton" name="prevButton">
            <property name="text">
@@ -92,7 +98,7 @@
         </layout>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="line1">
+        <layout class="QHBoxLayout" name="line2">
          <item>
           <widget class="QPushButton" name="deleteButton">
            <property name="text">
@@ -100,6 +106,16 @@
            </property>
            <property name="shortcut">
             <string>Del</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="copyButton">
+           <property name="text">
+            <string>copy</string>
+           </property>
+           <property name="shortcut">
+            <string>Ctrl+C</string>
            </property>
           </widget>
          </item>
@@ -128,7 +144,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="upButton">
+          <widget class="QPushButton" name="moveUpButton">
            <property name="text">
             <string>move up</string>
            </property>
@@ -169,6 +185,7 @@
     </property>
     <addaction name="actionAll_stars_on"/>
     <addaction name="actionAll_stars_off"/>
+    <addaction name="actionToggle_all_stars"/>
    </widget>
    <widget class="QMenu" name="menuRun">
     <property name="title">
@@ -259,6 +276,11 @@
     <string>F11</string>
    </property>
   </action>
+  <action name="actionToggle_all_stars">
+   <property name="text">
+    <string>Toggle all stars</string>
+   </property>
+  </action>
  </widget>
  <tabstops>
   <tabstop>starCanvas</tabstop>
@@ -268,7 +290,7 @@
   <tabstop>deleteButton</tabstop>
   <tabstop>addButton</tabstop>
   <tabstop>moveDownButton</tabstop>
-  <tabstop>upButton</tabstop>
+  <tabstop>moveUpButton</tabstop>
  </tabstops>
  <resources/>
  <connections>
