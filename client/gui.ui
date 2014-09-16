@@ -17,12 +17,18 @@
    <layout class="QHBoxLayout" name="horizontalLayout_2">
     <item>
      <widget class="QGraphicsView" name="starCanvas">
+      <property name="mouseTracking">
+       <bool>true</bool>
+      </property>
+      <property name="acceptDrops">
+       <bool>false</bool>
+      </property>
       <property name="backgroundBrush">
        <brush brushstyle="SolidPattern">
         <color alpha="255">
-         <red>10</red>
-         <green>10</green>
-         <blue>10</blue>
+         <red>20</red>
+         <green>20</green>
+         <blue>20</blue>
         </color>
        </brush>
       </property>
@@ -39,8 +45,8 @@
        <rectf>
         <x>0.000000000000000</x>
         <y>0.000000000000000</y>
-        <width>0.000000000000000</width>
-        <height>0.000000000000000</height>
+        <width>800.000000000000000</width>
+        <height>260.000000000000000</height>
        </rectf>
       </property>
       <property name="alignment">
@@ -173,6 +179,7 @@
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="actionNew"/>
     <addaction name="actionOpen"/>
     <addaction name="actionSave"/>
     <addaction name="actionSave_as"/>
@@ -243,10 +250,16 @@
    <property name="text">
     <string>All stars on</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+A</string>
+   </property>
   </action>
   <action name="actionAll_stars_off">
    <property name="text">
     <string>All stars off</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+A</string>
    </property>
   </action>
   <action name="actionRun_clip">
@@ -279,6 +292,17 @@
   <action name="actionToggle_all_stars">
    <property name="text">
     <string>Toggle all stars</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+T</string>
+   </property>
+  </action>
+  <action name="actionNew">
+   <property name="text">
+    <string>New</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
    </property>
   </action>
  </widget>

@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import QPushButton, QListWidget, QGraphicsView,\
 from PyQt5.uic import loadUi
 from os.path import expanduser, dirname, basename
 from model import Clip
+from StarRenderer import StarRenderer
 
 
 class GUI:
@@ -24,6 +25,7 @@ class GUI:
 
         self.app = app
         self.clip = Clip()
+        self.clip.addFrame()  # Add initial frame
         self.changed = False  # Indicates whether the file has been changed
 
         self.ui = loadUi(guiFilePath)
@@ -31,11 +33,34 @@ class GUI:
         self.__initTopBar()
 
         # Left canvas
-        self.canvas = self.ui.findChild(QGraphicsView, 'starCanvas')
-        self.scene = QGraphicsScene(self.canvas)
-        self.canvas.setScene(self.scene)
+        sceneView = self.ui.findChild(QGraphicsView, 'starCanvas')
+        scene = QGraphicsScene(sceneView)
+        sceneView.setScene(scene)
 
+        # Overwrite the mouse press event
+        def sceneMousePressEvent(event):
+            """
+            Catches the mouse press event of the scene.
+
+            @param event the event object, that belongs to the mouse press
+                event
+            """
+            star = scene.itemAt(event.scenePos(), sceneView.transform())
+
+            if star is not None:
+                self.clip.toggleStar(star.starId)
+                self.starRenderer.update()
+
+        scene.mousePressEvent = sceneMousePressEvent
+
+        # TODO find appropriate positions
+        starPositions = [(10, 250), (30, 250), (45, 235), (60, 250),
+                         (100, 245), (130, 245)]
+        self.starRenderer = StarRenderer(scene, starPositions, self.clip)
         self.ui.show()
+
+        self.updateFrameList()
+        self.frameList.setCurrentRow(0)
 
     def __initRightSidebar(self):
         """
@@ -82,6 +107,21 @@ class GUI:
         saveActionButton = self.ui.findChild(QAction, 'actionSave')
         saveActionButton.triggered.connect(self.actionSaveNsc)
 
+        newActionButton = self.ui.findChild(QAction, 'actionNew')
+        newActionButton.triggered.connect(self.actionNew)
+
+        toggleAllStarsActionButton = self.ui.findChild(
+            QAction, 'actionToggle_all_stars')
+        toggleAllStarsActionButton.triggered.connect(self.actionToggleAllStars)
+
+        allStarsOnActionButton = self.ui.findChild(QAction,
+                                                   'actionAll_stars_on')
+        allStarsOnActionButton.triggered.connect(self.actionAllStarsOn)
+
+        allStarsOffActionButton = self.ui.findChild(QAction,
+                                                    'actionAll_stars_off')
+        allStarsOffActionButton.triggered.connect(self.actionAllStarsOff)
+
     # === File management ===
 
     def actionOpenNsc(self, event):
@@ -102,6 +142,7 @@ class GUI:
         # Load file
         try:
             self.clip = Clip(filePath)
+            self.starRenderer.setClip(self.clip)
             self.updateFrameList()
         except FileNotFoundError:
             # Skip because of abort
@@ -142,6 +183,38 @@ class GUI:
         except Clip.NoFilePathException:
             self.actionSaveAsNsc(event)
 
+    def actionNew(self, event):
+        """
+        Creates a new clip.
+        """
+        self.clip = Clip()
+        self.clip.addFrame()
+        self.starRenderer.setClip(self.clip)
+
+    def actionToggleAllStars(self, event):
+        """
+        Toggles all stars.
+        """
+        for i in range(30):
+            self.clip.toggleStar(i)
+        self.starRenderer.update()
+
+    def actionAllStarsOn(self, event):
+        """
+        Toggles all stars.
+        """
+        for i in range(30):
+            self.clip.setStarState(i, True)
+        self.starRenderer.update()
+
+    def actionAllStarsOff(self, event):
+        """
+        Toggles all stars.
+        """
+        for i in range(30):
+            self.clip.setStarState(i, False)
+        self.starRenderer.update()
+
     # ========
 
     # === Frame management ===
@@ -157,6 +230,7 @@ class GUI:
             self.frameList.addItem(item)
 
         self.frameList.setCurrentRow(self.clip.activeFrame)
+        self.starRenderer.update()
 
     def frameListChangeRow(self, row):
         """
@@ -167,6 +241,7 @@ class GUI:
 
         try:
             self.clip.setActiveFrame(row)
+            self.starRenderer.update()
         except Clip.FrameIdOutOfBoundException:
             # On updateFrameList row is -1
             pass
@@ -227,6 +302,10 @@ class GUI:
         Removes the currently active frame.
         """
         self.clip.removeFrame(self.clip.activeFrame)
+        # Add obligatory frame
+        if self.clip.size == 0:
+            self.clip.addFrame()
+
         self.updateFrameList()
 
     def buttonCopyFrame(self, event):
@@ -249,3 +328,21 @@ class GUI:
         """
         self.clip.moveFrameDown()
         self.updateFrameList()
+
+    # ========
+
+    # === Animation ===
+
+    def play(self):
+        """
+        Plays the animation.
+        """
+        # TODO start thread which calls self.clip.nextFrame from time to time
+        pass
+
+    def stop(self):
+        """
+        Stops the animation.
+        """
+        # TODO stops thread
+        pass

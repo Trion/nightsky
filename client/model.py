@@ -176,7 +176,17 @@ class Clip:
 
         del self.frames[frameId]
 
-    def setStar(self, starId, state):
+    def getSetup(self):
+        """
+        Returns the setup of the currently active frame as list.
+
+        @param the setup as list of boolean values (True means on and False
+            means off)
+        """
+        return [self.frames[self.activeFrame].getStarState(i)
+                for i in range(30)]
+
+    def setStarState(self, starId, state):
         """
         sets the state of the star with starId in the current frame
 
@@ -184,7 +194,7 @@ class Clip:
         @param state True for star is on and False for star is off
         @raise StarOutOfBoundException starId doesn't exist
         """
-        self.frames[self.curFrame].setStar(starId, state)
+        self.frames[self.curFrame].setStarState(starId, state)
 
     def toggleStar(self, starId):
         """
@@ -194,7 +204,7 @@ class Clip:
         @raise StarOutOfBoundException starId doesn't exist
         """
         state = self.frames[self.curFrame].getStarState(starId)
-        self.setStar(starId, not state)
+        self.setStarState(starId, not state)
 
     # === Export/Import ===
     def save(self, filePath=None):
@@ -316,6 +326,19 @@ class Frame:
             raise self.__class__.StarOutOfBoundException()
 
         return self.stars[starId].isOn
+
+    def setStarState(self, starId, state):
+        """
+        Sets the state of the desired star.
+
+        @param starId id of the star
+        @param state the desired state (True means on and False means off)
+        """
+
+        if starId < 0 or starId >= len(self.stars):
+            raise self.__class__.StarOutOfBoundException()
+
+        self.stars[starId].isOn = state
 
     def export(self):
         """
