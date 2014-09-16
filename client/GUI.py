@@ -3,8 +3,9 @@ basic gui
 """
 
 from PyQt5.QtWidgets import QPushButton, QListWidget, QGraphicsView,\
-    QListWidgetItem, QGraphicsScene, QFileDialog, QAction
+    QListWidgetItem, QGraphicsScene, QFileDialog, QAction, QMenu, QMenuBar
 from PyQt5.uic import loadUi
+from PyQt5.QtCore import QThread
 from os.path import expanduser, dirname, basename
 from model import Clip
 from StarRenderer import StarRenderer
@@ -61,6 +62,10 @@ class GUI:
 
         self.updateFrameList()
         self.frameList.setCurrentRow(0)
+
+        # Setup animation ability
+        self.animationThread = AnimationThread(self)
+        self.animationThread.finished.connect(self.animationStopped)
 
     def __initRightSidebar(self):
         """
@@ -121,6 +126,13 @@ class GUI:
         allStarsOffActionButton = self.ui.findChild(QAction,
                                                     'actionAll_stars_off')
         allStarsOffActionButton.triggered.connect(self.actionAllStarsOff)
+
+        self.runClipActionButton = self.ui.findChild(QAction, 'actionRun_clip')
+        self.runClipActionButton.triggered.connect(self.actionRunClip)
+
+        self.stopClipActionButton = self.ui.findChild(QAction,
+                                                      'actionStop_clip')
+        self.stopClipActionButton.triggered.connect(self.actionStopClip)
 
     # === File management ===
 
@@ -333,16 +345,74 @@ class GUI:
 
     # === Animation ===
 
-    def play(self):
+    def actionRunClip(self):
         """
         Plays the animation.
         """
-        # TODO start thread which calls self.clip.nextFrame from time to time
-        pass
+        # Disable unnecessary widgets, to avoid problems in the animation
+        for child in self.ui.children():
+            child.setEnabled(False)
+        self.ui.findChild(QMenuBar, 'menubar').setEnabled(True)
+        self.ui.findChild(QMenu, 'menuRun').setEnabled(True)
+        self.stopClipActionButton.setEnabled(True)
 
-    def stop(self):
+        self.animationThread.start()
+
+    def actionStopClip(self):
         """
         Stops the animation.
         """
-        # TODO stops thread
-        pass
+        self.animationThread.stop()
+
+    def animationStopped(self):
+        """
+        Frees all gui elements when the animation is stopped
+        """
+        for child in self.ui.children():
+            child.setEnabled(True)
+        self.stopClipActionButton.setEnabled(False)
+
+        self.animationThread = AnimationThread(self)
+        self.animationThread.finished.connect(self.animationStopped)
+
+
+class AnimationThread(QThread):
+    """
+    Thread class to run the animation
+    """
+
+    TIME_STEP_DURATION = 100  # Duration of a time step in ms
+
+    def __init__(self, gui):
+        """
+        constructor
+
+        @param gui instance of the GUI class
+        """
+        super().__init__()
+        self.stopped = False
+        self.gui = gui
+
+    def run(self):
+        """
+        Runs the thread.
+        """
+
+        clip = self.gui.clip
+        while not self.stopped:
+            if clip.activeFrame == clip.size - 1:
+                clip.setActiveFrame(0)
+            else:
+                clip.nextFrame()
+            self.gui.updateFrameList()
+            self.gui.starRenderer.update()
+            self.msleep(self.__class__.TIME_STEP_DURATION)
+
+        self.stopped = False  # Set not stopped to enabled restart
+
+    def stop(self):
+        """
+        Stops the animation thread.
+        """
+        if self.isRunning():
+            self.stopped = True

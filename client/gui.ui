@@ -278,7 +278,7 @@
     <string>Stop clip</string>
    </property>
    <property name="shortcut">
-    <string>F5</string>
+    <string>F6</string>
    </property>
   </action>
   <action name="actionUpload">
