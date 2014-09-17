@@ -325,7 +325,7 @@ void processClipTransmission() {
  * Processes a "ping"-request, which could be used by a client to identify the right port
  */
 void processPing() {
-    Serial.write("nsc1"); // Respond to ping
+    Serial.write("nsp1"); // Respond to ping
 }
 
 // ========
