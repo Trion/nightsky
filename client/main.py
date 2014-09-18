@@ -5,6 +5,6 @@ from GUI import GUI
 
 app = QApplication(sys.argv)
 
-ui = GUI('gui.ui', app)
+ui = GUI('resources/gui.ui', app)
 
 sys.exit(app.exec_())

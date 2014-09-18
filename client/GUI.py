@@ -3,12 +3,14 @@ basic gui
 """
 
 from PyQt5.QtWidgets import QPushButton, QListWidget, QGraphicsView,\
-    QListWidgetItem, QGraphicsScene, QFileDialog, QAction, QMenu, QMenuBar
+    QListWidgetItem, QGraphicsScene, QFileDialog, QAction, QMenu, QMenuBar,\
+    QDialog, QLabel
 from PyQt5.uic import loadUi
 from PyQt5.QtCore import QThread
 from os.path import expanduser, dirname, basename
 from model import Clip
 from StarRenderer import StarRenderer
+from Communicator import Communicator
 
 
 class GUI:
@@ -66,6 +68,12 @@ class GUI:
         # Setup animation ability
         self.animationThread = AnimationThread(self)
         self.animationThread.finished.connect(self.animationStopped)
+
+        # Upload to arduino
+        self.notFoundDialog = loadUi('resources/notFoundDialog.ui')
+        self.choosePortDialog = loadUi('resources/choosePort.ui')
+        self.transmissionStatetDialog = \
+            loadUi('resources/transmissionStateDialog.ui')
 
     def __initRightSidebar(self):
         """
@@ -133,6 +141,9 @@ class GUI:
         self.stopClipActionButton = self.ui.findChild(QAction,
                                                       'actionStop_clip')
         self.stopClipActionButton.triggered.connect(self.actionStopClip)
+
+        uploadActionButton = self.ui.findChild(QAction, 'actionUpload')
+        uploadActionButton.triggered.connect(self.actionUpload)
 
     # === File management ===
 
@@ -374,6 +385,35 @@ class GUI:
 
         self.animationThread = AnimationThread(self)
         self.animationThread.finished.connect(self.animationStopped)
+
+    # ========
+
+    # === Upload ===
+
+    def actionUpload(self):
+        """
+        Executes the upload.
+        """
+        ports = Communicator.getPorts()
+
+        if len(ports) == 0:
+            # No Device found
+            self.notFoundDialog.exec()
+        else:
+            portsList = self.choosePortDialog.findChild(QListWidget,
+                                                        'portsList')
+            portsList.clear()
+            for port in ports:
+                item = QListWidgetItem(port)
+                self.portsList.addItem(item)
+                self.portsList.setCurrentRow(0)
+            # ok-button pressed
+            if self.choosePortDialog.exec() == 1:
+                curItem = portsList.currentItem()
+                # TODO show transmission dialog
+                # TODO start thread for compression and transmission
+                #   to give the user feedback about the state
+                compressedFrames = self.clip.export()
 
 
 class AnimationThread(QThread):

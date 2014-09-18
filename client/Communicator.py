@@ -12,13 +12,7 @@ class Communicator:
     Class that's responsible for communication with the arduino
     """
 
-    def __init__(self):
-        """
-        constructor
-        """
-        pass
-
-    def getPorts(self):
+    def getPorts(cls):
         """
         returns a list of available serial ports
 
@@ -60,4 +54,23 @@ class Communicator:
                     result.append(port)
             except serial.SerialTimeoutException:
                 pass
-        return possiblePorts
+        return result
+
+    def transmitClip(cls, clipData, port):
+        """
+        Transmits the clip over the desired port
+
+        @param clipData the compressed clip as bytes
+        @param port port of the Nightsky device
+        """
+
+        s = serial.Serial(port)
+        s.write(b'helo')
+        helpResp = s.read(4)
+
+        if helpResp == b'helo':
+            # Correct response, so proceed
+            s.write(clipData)
+            s.write(b'\x00\x00')  # End transmission
+
+        s.close()
