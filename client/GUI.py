@@ -57,9 +57,16 @@ class GUI:
 
         scene.mousePressEvent = sceneMousePressEvent
 
-        # TODO find appropriate positions
-        starPositions = [(10, 250), (30, 250), (45, 235), (60, 250),
-                         (100, 245), (130, 245)]
+        starPositions = [(120, 25), (202, 28), (265, 58), (333, 20),
+                         (523, 50), (643, 31),
+                         (80, 55), (108, 78), (269, 80), (411, 49), (468, 80),
+                         (634, 92),
+                         (22, 97), (130, 87), (274, 100), (411, 152),
+                         (580, 155), (707, 145),
+                         (67, 168), (232, 152), (335, 213), (441, 160),
+                         (479, 172), (658, 227),
+                         (105, 228), (194, 214), (332, 258), (468, 250),
+                         (520, 202), (718, 262)]
         self.starRenderer = StarRenderer(scene, starPositions, self.clip)
         self.ui.show()
 

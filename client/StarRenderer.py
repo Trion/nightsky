@@ -71,6 +71,6 @@ class StarEllipse(QGraphicsEllipseItem):
         @param positon position of the star
         @param brush the initial brush
         """
-        super().__init__(position[0], position[1], 10, 10)
+        super().__init__(position[0], position[1], 13, 13)
         self.setBrush(brush)
         self.starId = id
