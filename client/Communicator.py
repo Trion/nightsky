@@ -68,7 +68,7 @@ class Communicator:
                 time.sleep(2)  # Sleep for windows
                 s.write(b'ping')
                 pong = s.read(4)
-                if pong == b'nsp1':
+                if pong == b'nsd1':
                     result.append(port)
             except serial.SerialTimeoutException:
                 pass
@@ -83,6 +83,7 @@ class Communicator:
         @raise CommunicationFaultException when the helo response is wrong
         """
         cls.serialPort = serial.Serial(port)
+        time.sleep(2)  # Sleep for windows
         cls.serialPort.write(b'helo')
         heloResp = cls.serialPort.read(4)
         if heloResp != b'helo':

@@ -21,7 +21,7 @@
 // === Animation management ===
 void restartAnimation();
 void loadFrame(int i);
-void saveFrame(int frameId, byte* frame);
+void saveFrame(int frameId, char* frame);
 void setEndFlag(int frameId);
 bool isEndFlag(int frameId);
 void writeDefaultClip();
@@ -78,7 +78,7 @@ void loop() {
 
     // Render current line
     digitalWrite(latchPin, LOW);
-    shiftOut(dataPin, clockPin, MSBFIRST, curFrame[curLine]); // Shift in activated cols of the line 
+    shiftOut(dataPin, clockPin, MSBFIRST, curFrame[curLine]); // Shift in activated cols of the line
     shiftOut(dataPin, clockPin, MSBFIRST, 1 << (curLine + LINE_OFFSET)); // Shift in the current line
     digitalWrite(latchPin, HIGH);
 
@@ -128,7 +128,7 @@ void loadFrame(int i) {
  * \param frameId index (position) of the frame
  * \param frame the frame that should be written in
  */
-void saveFrame(int frameId, byte* frame) {
+void saveFrame(int frameId, char* frame) {
     for (byte i = 0; i < FRAME_SIZE; i++) {
         EEPROM.write(frameId * FRAME_SIZE + i, frame[i]);
     }
@@ -170,7 +170,7 @@ bool isEndFlag(int frameId) {
 void writeDefaultClip() {
     digitalWrite(infoPin, HIGH); // Indicating that there is some processing
 
-    byte frame[5];
+    char frame[5];
     for (int j = 0; j < FRAME_SIZE; j++) frame[j] = 0; // Reset frame buffer
 
     // Blink line by line
@@ -269,9 +269,7 @@ void processRequest() {
 
     // Get initial message
     char msg[5];
-    for (byte i = 0; i < 3; i++) {
-        msg[i] = Serial.read();
-    }
+    Serial.readBytes(msg, 4);
     msg[4] = '\0';
 
     // Determine request type
@@ -290,13 +288,12 @@ void processClipTransmission() {
     Serial.write("helo"); // Respond, so client start sending frames
 
     // Receive frames
-    byte frame[5];
+    char frame[5];
     short frameId = 0;
     while (frameId < MAX_FRAME_COUNT) { // Prevent EEPROM overflow
 
         // Read first two byte for termination
-        frame[0] = Serial.read();
-        frame[1] = Serial.read();
+        Serial.readBytes(frame, 2);
 
         // Termination by client
         if (((frame[0] << 8) + frame[1]) == 0) {
@@ -304,9 +301,7 @@ void processClipTransmission() {
         }
 
         // Read rest of frame
-        frame[2] = Serial.read();
-        frame[3] = Serial.read();
-        frame[4] = Serial.read();
+        Serial.readBytes(frame+2, 3);
 
         // Write complete frame into EEPROM
         saveFrame(frameId, frame);
@@ -325,7 +320,6 @@ void processClipTransmission() {
  * Processes a "ping"-request, which could be used by a client to identify the right port
  */
 void processPing() {
-    Serial.write("nsp1"); // Respond to ping
+    Serial.write("nsd1"); // Respond to ping
 }
-
 // ========

@@ -414,12 +414,12 @@ class GUI:
             portsList.clear()
             for port in ports:
                 item = QListWidgetItem(port)
-                self.portsList.addItem(item)
-                self.portsList.setCurrentRow(0)
+                portsList.addItem(item)
+                portsList.setCurrentRow(0)
             if self.choosePortDialog.exec() == 1:
                 # ok-button pressed
                 self.transmissionThread.port = portsList.currentItem().text()
-                self.transmissionThread.clip = self.clip()
+                self.transmissionThread.clip = self.clip
                 self.transmissionThread.start()
                 self.transmissionStateDialog.exec()
 
@@ -483,7 +483,7 @@ class TransmissionThread(QThread):
         self.dialog = transmissionStateDialog
         self.clip = None
         self.port = None
-        self.aborted = True
+        self.aborted = False
 
     def run(self):
         """
@@ -500,7 +500,7 @@ class TransmissionThread(QThread):
 
         if self.aborted:
             abortButton.setEnabled(False)
-            self.dialog.reject()
+            self.dialog.done(0)
             return
 
         label.setText('Compress frames...')
@@ -511,7 +511,7 @@ class TransmissionThread(QThread):
 
         if self.aborted:
             abortButton.setEnabled(False)
-            self.dialog.reject()
+            self.dialog.done(0)
             return
 
         label.setText('Start transmission...')
@@ -522,21 +522,21 @@ class TransmissionThread(QThread):
             abortButton.setEnabled(False)
             label.setText('Abort transmission...')
             Communicator.end()
-            self.dialog.reject()
+            self.dialog.done(0)
             return
 
         i = 0
         for frame in compressedFrames:
-            label.setText('Transmit frame {0:d} of \
-                          {1:d}...'.format(i, clipLength))
+            label.setText('Transmit frame {0:d} of {1:d}...'
+                          .format(i, clipLength))
             Communicator.transmitFrame(frame)
             bar.setValue(bar.value() + 1)
             if self.aborted:
                 abortButton.setEnabled(False)
-                label.setText('Abort at frame {0:d} of \
-                              {1:d}...'.format(i, clipLength))
+                label.setText('Abort at frame {0:d} of {1:d}...'
+                              .format(i, clipLength))
                 Communicator.end()
-                self.dialog.reject()
+                self.dialog.done(0)
                 return
             i += 1
 
@@ -544,10 +544,11 @@ class TransmissionThread(QThread):
 
         label.setText('Complete transmission...')
         Communicator.end()
+        bar.setValue(bar.value() + 1)
 
         label.setText('Transmission complete...')
-        time.sleep(1)
-        self.dialog.accept()
+        time.sleep(2)
+        self.dialog.done(1)
 
     def abort(self):
         """
