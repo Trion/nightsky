@@ -452,7 +452,7 @@ class AnimationThread(QThread):
                 clip.setActiveFrame(0)
             else:
                 clip.nextFrame()
-            self.gui.updateFrameList()
+            self.gui.frameList.setCurrentRow(self.gui.clip.activeFrame)
             self.gui.starRenderer.update()
             self.msleep(self.__class__.TIME_STEP_DURATION)
 
