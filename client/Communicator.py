@@ -29,6 +29,7 @@ class Communicator:
 
     serialPort = None
 
+    @classmethod
     def getPorts(cls):
         """
         returns a list of available serial ports
@@ -73,6 +74,7 @@ class Communicator:
                 pass
         return result
 
+    @classmethod
     def start(cls, port):
         """
         Starts a transmission.
@@ -87,6 +89,7 @@ class Communicator:
             cls.serialPort.close()
             raise cls.CommunicationFaultException(b'helo', heloResp)
 
+    @classmethod
     def transmitFrame(cls, frame):
         """
         Transmits a frame.
@@ -95,6 +98,7 @@ class Communicator:
         """
         cls.serialPort.write(frame)
 
+    @classmethod
     def end(cls):
         """
         Ends the transmission.
