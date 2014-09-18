@@ -4,13 +4,14 @@ basic gui
 
 from PyQt5.QtWidgets import QPushButton, QListWidget, QGraphicsView,\
     QListWidgetItem, QGraphicsScene, QFileDialog, QAction, QMenu, QMenuBar,\
-    QDialog, QLabel
+    QLabel, QProgressBar
 from PyQt5.uic import loadUi
 from PyQt5.QtCore import QThread
 from os.path import expanduser, dirname, basename
 from model import Clip
 from StarRenderer import StarRenderer
 from Communicator import Communicator
+import time
 
 
 class GUI:
@@ -72,8 +73,13 @@ class GUI:
         # Upload to arduino
         self.notFoundDialog = loadUi('resources/notFoundDialog.ui')
         self.choosePortDialog = loadUi('resources/choosePort.ui')
-        self.transmissionStatetDialog = \
+        self.transmissionStateDialog = \
             loadUi('resources/transmissionStateDialog.ui')
+        self.transmissionThread = TransmissionThread(
+            self.transmissionStateDialog)
+        abortButton = self.transmissionStateDialog.findChild(QPushButton,
+                                                             'abortButton')
+        abortButton.clicked.connect(self.transmissionThread.abort)
 
     def __initRightSidebar(self):
         """
@@ -146,7 +152,6 @@ class GUI:
         uploadActionButton.triggered.connect(self.actionUpload)
 
     # === File management ===
-
     def actionOpenNsc(self, event):
         """
         Opens a nightsky clip file.
@@ -241,7 +246,6 @@ class GUI:
     # ========
 
     # === Frame management ===
-
     def updateFrameList(self):
         """
         Updates the frame list.
@@ -355,7 +359,6 @@ class GUI:
     # ========
 
     # === Animation ===
-
     def actionRunClip(self):
         """
         Plays the animation.
@@ -389,7 +392,6 @@ class GUI:
     # ========
 
     # === Upload ===
-
     def actionUpload(self):
         """
         Executes the upload.
@@ -407,13 +409,12 @@ class GUI:
                 item = QListWidgetItem(port)
                 self.portsList.addItem(item)
                 self.portsList.setCurrentRow(0)
-            # ok-button pressed
             if self.choosePortDialog.exec() == 1:
-                curItem = portsList.currentItem()
-                # TODO show transmission dialog
-                # TODO start thread for compression and transmission
-                #   to give the user feedback about the state
-                compressedFrames = self.clip.export()
+                # ok-button pressed
+                self.transmissionThread.port = portsList.currentItem().text()
+                self.transmissionThread.clip = self.clip()
+                self.transmissionThread.start()
+                self.transmissionStateDialog.exec()
 
 
 class AnimationThread(QThread):
@@ -456,3 +457,93 @@ class AnimationThread(QThread):
         """
         if self.isRunning():
             self.stopped = True
+
+
+class TransmissionThread(QThread):
+    """
+    Thread class to run the transmission
+    """
+
+    def __init__(self, transmissionStateDialog):
+        """
+        constructor
+
+        @param transmissionStateDialog instance of dialog, that should show
+            the state of transmission
+        @param clip the clip object, that should be transferred
+        """
+        super().__init__()
+        self.dialog = transmissionStateDialog
+        self.clip = None
+        self.port = None
+        self.aborted = True
+
+    def run(self):
+        """
+        Runs the thread.
+        """
+        label = self.dialog.findChild(QLabel, 'stateLabel')
+        bar = self.dialog.findChild(QProgressBar, 'progressBar')
+        bar.setValue(0)
+        bar.setMinimum(0)
+        # Set temporary max size (+ 3 because of compression, start and end)
+        bar.setMaximum(self.clip.size + 3)
+        abortButton = self.dialog.findChild(QPushButton, 'abortButton')
+        abortButton.setEnabled(True)
+
+        if self.aborted:
+            abortButton.setEnabled(False)
+            self.dialog.reject()
+            return
+
+        label.setText('Compress frames...')
+        compressedFrames = self.clip.export()
+        clipLength = len(compressedFrames)
+        bar.setMaximum(clipLength + 3)  # Set final max size
+        bar.setValue(1)
+
+        if self.aborted:
+            abortButton.setEnabled(False)
+            self.dialog.reject()
+            return
+
+        label.setText('Start transmission...')
+        Communicator.start(self.port)
+        bar.setValue(bar.value() + 1)
+
+        if self.aborted:
+            abortButton.setEnabled(False)
+            label.setText('Abort transmission...')
+            Communicator.end()
+            self.dialog.reject()
+            return
+
+        i = 0
+        for frame in compressedFrames:
+            label.setText('Transmit frame {0:d} of \
+                          {1:d}...'.format(i, clipLength))
+            Communicator.transmitFrame(frame)
+            bar.setValue(bar.value() + 1)
+            if self.aborted:
+                abortButton.setEnabled(False)
+                label.setText('Abort at frame {0:d} of \
+                              {1:d}...'.format(i, clipLength))
+                Communicator.end()
+                self.dialog.reject()
+                return
+            i += 1
+
+        abortButton.setEnabled(False)
+
+        label.setText('Complete transmission...')
+        Communicator.end()
+
+        label.setText('Transmission complete...')
+        time.sleep(1)
+        self.dialog.accept()
+
+    def abort(self):
+        """
+        Aborts the transmission.
+        """
+        self.aborted = True

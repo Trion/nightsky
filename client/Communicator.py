@@ -12,6 +12,23 @@ class Communicator:
     Class that's responsible for communication with the arduino
     """
 
+    class CommunicationFaultException(Exception):
+        """
+        Exception for communication problems
+        """
+
+        def __init__(self, expectedMsg, msg):
+            """
+            constructor
+
+            @param expectedMsg excepted content of the message
+            @param msg the content of the message you got
+            """
+            super().__init__(self, 'Expected content: "{0}" | Content you got:\
+                              "{1}"'.format(expectedMsg, msg))
+
+    serialPort = None
+
     def getPorts(cls):
         """
         returns a list of available serial ports
@@ -56,21 +73,34 @@ class Communicator:
                 pass
         return result
 
-    def transmitClip(cls, clipData, port):
+    def start(cls, port):
         """
-        Transmits the clip over the desired port
+        Starts a transmission.
 
-        @param clipData the compressed clip as bytes
         @param port port of the Nightsky device
+        @raise CommunicationFaultException when the helo response is wrong
         """
+        cls.serialPort = serial.Serial(port)
+        cls.serialPort.write(b'helo')
+        heloResp = cls.serialPort.read(4)
+        if heloResp != b'helo':
+            cls.serialPort.close()
+            raise cls.CommunicationFaultException(b'helo', heloResp)
 
-        s = serial.Serial(port)
-        s.write(b'helo')
-        helpResp = s.read(4)
+    def transmitFrame(cls, frame):
+        """
+        Transmits a frame.
 
-        if helpResp == b'helo':
-            # Correct response, so proceed
-            s.write(clipData)
-            s.write(b'\x00\x00')  # End transmission
+        @param frame compressed frame as bytes
+        """
+        cls.serialPort.write(frame)
 
-        s.close()
+    def end(cls):
+        """
+        Ends the transmission.
+        """
+        cls.serialPort.write(b'\x00\x00')
+        doneResp = cls.serialPort.read(4)  # Wait for "done" from device
+        cls.serialPort.close()
+        if doneResp != b'done':
+            raise cls.CommunicationFaultException(b'done', doneResp)
