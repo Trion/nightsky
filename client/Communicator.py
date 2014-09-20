@@ -24,8 +24,20 @@ class Communicator:
             @param expectedMsg excepted content of the message
             @param msg the content of the message you got
             """
-            super().__init__(self, 'Expected content: "{0}" | Content you got:\
-                              "{1}"'.format(expectedMsg, msg))
+            super().__init__(self,
+                             'Expected content: "{0}" | Content you got: "{1}"'
+                             .format(expectedMsg, msg))
+
+    class CompressedClipTooLong(Exception):
+        """
+        Exception for too long clips
+        """
+
+        def __init__(self):
+            """
+            constructor
+            """
+            super().__init__(self, 'Compressed clip is too long!')
 
     serialPort = None
 
@@ -98,6 +110,12 @@ class Communicator:
         @param frame compressed frame as bytes
         """
         cls.serialPort.write(frame)
+        resp = cls.serialPort.read(4)
+        print(resp)
+        if resp == b'done':
+            raise cls.CompressedClipTooLong()
+        if resp != b'ok':
+            raise cls.CommunicationFaultException(b'ok', resp)
 
     @classmethod
     def end(cls):
@@ -107,5 +125,6 @@ class Communicator:
         cls.serialPort.write(b'\x00\x00')
         doneResp = cls.serialPort.read(4)  # Wait for "done" from device
         cls.serialPort.close()
+        print(doneResp)
         if doneResp != b'done':
             raise cls.CommunicationFaultException(b'done', doneResp)

@@ -45,6 +45,7 @@ int dataPin = 11; // Pin connected to DS of 74HC595
 void processRequest();
 void processPing();
 void processClipTransmission();
+void processReset();
 // Pin to indicate whether transmission is in progress
 int infoPin = 13;
 // ========
@@ -277,6 +278,8 @@ void processRequest() {
         processClipTransmission();
     } else if (strcmp(msg, "ping") == 0) {
         processPing();
+    } else if (strcmp(msg, "rest") == 0) {
+        processReset();
     }
     digitalWrite(infoPin, LOW);
 }
@@ -294,7 +297,6 @@ void processClipTransmission() {
 
         // Read first two byte for termination
         Serial.readBytes(frame, 2);
-
         // Termination by client
         if (((frame[0] << 8) + frame[1]) == 0) {
             break;
@@ -305,6 +307,7 @@ void processClipTransmission() {
 
         // Write complete frame into EEPROM
         saveFrame(frameId, frame);
+        Serial.write("ok");
         frameId++;
     }
 
@@ -321,5 +324,11 @@ void processClipTransmission() {
  */
 void processPing() {
     Serial.write("nsd1"); // Respond to ping
+}
+
+void processReset() {
+    writeDefaultClip();
+    restartAnimation();   
+    Serial.write("done");
 }
 // ========

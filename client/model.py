@@ -265,21 +265,22 @@ class Clip:
         # List of bytes, which represents the frames
         exportedFrames = []
         # Setup of the previous frame
-        curFrameSetup = -1
+        curFrameSetup = self.frames[0].export()
         # Duration of the current frame
         curFrameDuration = 1
 
-        for frame in self.frames:
+        for frame in self.frames[1:]:
             setup = frame.export()
-            if curFrameSetup == setup:
+            if curFrameSetup == setup and curFrameDuration < 2 ** 10:
                 curFrameDuration += 1
             else:
-                packedFrame = setup + (curFrameDuration << 30)
+                packedFrame = curFrameSetup + (curFrameDuration << 30)
                 # Convert to bytes
                 byteArr = array('B')  # Create array with unsigned chars
                 for i in range(5):
                     byteArr.append((packedFrame >> (i * 8)) & 0b11111111)
                 exportedFrames.append(bytes(byteArr))
+                curFrameSetup = setup
                 curFrameDuration = 1
 
         return exportedFrames
@@ -352,7 +353,7 @@ class Frame:
         setup = 0
         # Generate number
         for star in self.stars:
-            if (star.isOn):
+            if star.isOn:
                 setup += 1 << (len(self.stars) - 1 - i)
             i += 1
 
