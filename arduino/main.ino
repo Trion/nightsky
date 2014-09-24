@@ -307,7 +307,7 @@ void processClipTransmission() {
 
         // Write complete frame into EEPROM
         saveFrame(frameId, frame);
-        Serial.write("ok");
+        Serial.write("ok  ");
         frameId++;
     }
 
@@ -328,7 +328,7 @@ void processPing() {
 
 void processReset() {
     writeDefaultClip();
-    restartAnimation();   
+    restartAnimation();
     Serial.write("done");
 }
 // ========

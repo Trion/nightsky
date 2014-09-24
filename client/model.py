@@ -274,16 +274,30 @@ class Clip:
             if curFrameSetup == setup and curFrameDuration < 2 ** 10:
                 curFrameDuration += 1
             else:
-                packedFrame = curFrameSetup + (curFrameDuration << 30)
-                # Convert to bytes
-                byteArr = array('B')  # Create array with unsigned chars
-                for i in range(5):
-                    byteArr.append((packedFrame >> (i * 8)) & 0b11111111)
-                exportedFrames.append(bytes(byteArr))
+                exportedFrames.append(self.packFrame(curFrameDuration,
+                                                     curFrameSetup))
                 curFrameSetup = setup
                 curFrameDuration = 1
 
+        # Add last frame
+        exportedFrames.append(self.packFrame(curFrameDuration,
+                                             curFrameSetup))
+
         return exportedFrames
+
+    def packFrame(self, duration, setup):
+        """
+        packs a frame
+
+        @param duration duration of the frame
+        @param setup setup of the frame
+        """
+        packedFrame = setup + (duration << 30)
+        # Convert to bytes
+        byteArr = array('B')  # Create array with unsigned chars
+        for i in range(5):
+            byteArr.append((packedFrame >> ((4 - i) * 8)) & 0b11111111)
+        return bytes(byteArr)
 
 
 class Frame:
@@ -349,12 +363,12 @@ class Frame:
         @return the setup as integer
         """
 
-        i = 0
+        i = 1
         setup = 0
         # Generate number
         for star in self.stars:
             if star.isOn:
-                setup += 1 << (len(self.stars) - 1 - i)
+                setup += 1 << (len(self.stars) - i)
             i += 1
 
         return setup

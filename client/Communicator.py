@@ -111,11 +111,10 @@ class Communicator:
         """
         cls.serialPort.write(frame)
         resp = cls.serialPort.read(4)
-        print(resp)
         if resp == b'done':
             raise cls.CompressedClipTooLong()
-        if resp != b'ok':
-            raise cls.CommunicationFaultException(b'ok', resp)
+        if resp != b'ok  ':
+            raise cls.CommunicationFaultException(b'ok  ', resp)
 
     @classmethod
     def end(cls):
@@ -125,6 +124,5 @@ class Communicator:
         cls.serialPort.write(b'\x00\x00')
         doneResp = cls.serialPort.read(4)  # Wait for "done" from device
         cls.serialPort.close()
-        print(doneResp)
         if doneResp != b'done':
             raise cls.CommunicationFaultException(b'done', doneResp)

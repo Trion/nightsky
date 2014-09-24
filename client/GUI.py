@@ -416,6 +416,7 @@ class GUI:
                 item = QListWidgetItem(port)
                 portsList.addItem(item)
                 portsList.setCurrentRow(0)
+
             if self.choosePortDialog.exec() == 1:
                 # ok-button pressed
                 self.transmissionThread.port = portsList.currentItem().text()
