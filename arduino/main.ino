@@ -291,7 +291,7 @@ void processClipTransmission() {
     Serial.write("helo"); // Respond, so client start sending frames
 
     // Receive frames
-    char frame[5];
+    char frame[] = {0, 0, 0, 0, 0};
     short frameId = 0;
     while (frameId < MAX_FRAME_COUNT) { // Prevent EEPROM overflow
 

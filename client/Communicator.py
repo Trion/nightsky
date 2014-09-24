@@ -111,6 +111,7 @@ class Communicator:
         """
         cls.serialPort.write(frame)
         resp = cls.serialPort.read(4)
+
         if resp == b'done':
             raise cls.CompressedClipTooLong()
         if resp != b'ok  ':

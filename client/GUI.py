@@ -53,7 +53,6 @@ class GUI:
 
             if star is not None:
                 self.clip.toggleStar(star.starId)
-                print(star.starId, event.scenePos().x(), event.scenePos().y())
                 self.starRenderer.update()
 
         scene.mousePressEvent = sceneMousePressEvent
