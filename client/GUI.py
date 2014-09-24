@@ -19,7 +19,7 @@ class GUI:
     GUI class
     """
 
-    def __init__(self, guiFilePath, app):
+    def __init__(self, app):
         """
         constructor
 
@@ -32,7 +32,7 @@ class GUI:
         self.clip.addFrame()  # Add initial frame
         self.changed = False  # Indicates whether the file has been changed
 
-        self.ui = loadUi(guiFilePath)
+        self.ui = loadUi('resources/gui.ui')
         self.__initRightSidebar()
         self.__initTopBar()
 
@@ -87,6 +87,7 @@ class GUI:
         abortButton = self.transmissionStateDialog.findChild(QPushButton,
                                                              'abortButton')
         abortButton.clicked.connect(self.transmissionThread.abort)
+        self.searchDevicesThread = SearchDevicesThread()
 
     def __initRightSidebar(self):
         """
@@ -403,7 +404,9 @@ class GUI:
         """
         Executes the upload.
         """
-        ports = Communicator.getPorts()
+        self.searchDevicesThread.start()
+        self.searchDevicesThread.searchDevicesDialog.exec()
+        ports = self.searchDevicesThread.getPorts()
 
         if len(ports) == 0:
             # No Device found
@@ -465,6 +468,33 @@ class AnimationThread(QThread):
         """
         if self.isRunning():
             self.stopped = True
+
+
+class SearchDevicesThread(QThread):
+    """
+    Thread for search dialog
+    """
+
+    def __init__(self):
+        """
+        constructor
+        """
+        super().__init__()
+        self.searchDevicesDialog = loadUi('resources/searchDevicesDialog.ui')
+        self.ports = None
+
+    def run(self):
+        """
+        Run method
+        """
+        self.ports = Communicator.getPorts()
+        self.searchDevicesDialog.close()
+
+    def getPorts(self):
+        """
+        Closes the dialog.
+        """
+        return self.ports
 
 
 class TransmissionThread(QThread):
