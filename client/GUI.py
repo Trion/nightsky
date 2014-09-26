@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QPushButton, QListWidget, QGraphicsView,\
     QListWidgetItem, QGraphicsScene, QFileDialog, QAction, QMenu, QMenuBar,\
     QLabel, QProgressBar
 from PyQt5.uic import loadUi
-from PyQt5.QtCore import QThread
+from PyQt5.QtCore import QThread, pyqtSignal, Qt
 from os.path import expanduser, dirname, basename
 from model import Clip
 from StarRenderer import StarRenderer
@@ -78,16 +78,32 @@ class GUI:
         self.animationThread.finished.connect(self.animationStopped)
 
         # Upload to arduino
-        self.notFoundDialog = loadUi('resources/notFoundDialog.ui')
+
+        # Device search
+        self.searchDevicesDialog = loadUi('resources/searchDevicesDialog.ui')
+        self.searchDevicesDialog.setWindowFlags(Qt.WindowTitleHint)
+        self.searchDevicesThread = SearchDevicesThread()
+        self.searchDevicesThread.completed.connect(self.searchDevicesDialog.close)
+
+        self.notFoundDialog = loadUi('resources/notFoundDialog.ui')  # Dialog if no device is found
+
+        # Choose device
         self.choosePortDialog = loadUi('resources/choosePort.ui')
+
+        # Transmission state
         self.transmissionStateDialog = \
             loadUi('resources/transmissionStateDialog.ui')
-        self.transmissionThread = TransmissionThread(
-            self.transmissionStateDialog)
+        self.transmissionThread = TransmissionThread()
+        self.transmissionThread.finished.connect(self.transmissionStateDialog.close)
+        self.transmissionThread.startTransmissionProcess.connect(self.startTransmission)
+        self.transmissionThread.setText.connect(self.setTransmissionStateText)
+        self.transmissionThread.addProgress.connect(self.addTransmissionProgress)
+        self.transmissionThread.setProgressLimits.connect(self.setTransmissionProgressLimits)
+        self.transmissionThread.aborted.connect(self.disableTransmissionAbortionButton)
+        self.transmissionThread.completed.connect(self.disableTransmissionAbortionButton)
         abortButton = self.transmissionStateDialog.findChild(QPushButton,
                                                              'abortButton')
         abortButton.clicked.connect(self.transmissionThread.abort)
-        self.searchDevicesThread = SearchDevicesThread()
 
     def __initRightSidebar(self):
         """
@@ -405,7 +421,7 @@ class GUI:
         Executes the upload.
         """
         self.searchDevicesThread.start()
-        self.searchDevicesThread.searchDevicesDialog.exec()
+        self.searchDevicesDialog.exec()
         ports = self.searchDevicesThread.getPorts()
 
         if len(ports) == 0:
@@ -424,8 +440,54 @@ class GUI:
                 # ok-button pressed
                 self.transmissionThread.port = portsList.currentItem().text()
                 self.transmissionThread.clip = self.clip
+                self.transmissionStateDialog.show()
                 self.transmissionThread.start()
-                self.transmissionStateDialog.exec()
+
+    def startTransmission(self):
+        """
+        Starts the transmission for the gui.
+        """
+        bar = self.transmissionStateDialog.findChild(QProgressBar, 'progressBar')
+        bar.setValue(0)
+        bar.setMinimum(0)
+        # Set temporary max size (+ 3 because of compression, start and end)
+        bar.setMaximum(self.clip.size + 3)
+        abortButton = self.transmissionStateDialog.findChild(QPushButton, 'abortButton')
+        abortButton.setEnabled(True)
+
+    def setTransmissionProgressLimits(self, min, max):
+        """
+        Sets the min and max of the transmission progressbar.
+
+        @param min minimum for bar
+        @param max maximum for bar
+        """
+        bar = self.transmissionStateDialog.findChild(QProgressBar, 'progressBar')
+        bar.setMinimum(min)
+        bar.setMaximum(max)
+
+    def setTransmissionStateText(self, msg):
+        """
+        Sets the text of the transmission state dialog
+
+        @param msg the text that should be shown
+        """
+        label = self.transmissionStateDialog.findChild(QLabel, 'stateLabel')
+        label.setText(msg)
+
+    def addTransmissionProgress(self):
+        """
+        Adds progress to the progressbar.
+        """
+        bar = self.transmissionStateDialog.findChild(QProgressBar, 'progressBar')
+        bar.setValue(bar.value() + 1)
+
+    def disableTransmissionAbortionButton(self):
+        """
+        Disables the abort button in the transmission state dialog.
+        """
+        abortButton = self.transmissionStateDialog.findChild(QPushButton, 'abortButton')
+        abortButton.setEnabled(False)
 
 
 class AnimationThread(QThread):
@@ -475,12 +537,13 @@ class SearchDevicesThread(QThread):
     Thread for search dialog
     """
 
+    completed = pyqtSignal()
+
     def __init__(self):
         """
         constructor
         """
         super().__init__()
-        self.searchDevicesDialog = loadUi('resources/searchDevicesDialog.ui')
         self.ports = None
 
     def run(self):
@@ -488,7 +551,7 @@ class SearchDevicesThread(QThread):
         Run method
         """
         self.ports = Communicator.getPorts()
-        self.searchDevicesDialog.close()
+        self.completed.emit()
 
     def getPorts(self):
         """
@@ -502,87 +565,80 @@ class TransmissionThread(QThread):
     Thread class to run the transmission
     """
 
-    def __init__(self, transmissionStateDialog):
+    # Signals to make the gui responsive
+    startTransmissionProcess = pyqtSignal()
+    setText = pyqtSignal(str)
+    setProgressLimits = pyqtSignal(int, int)
+    addProgress = pyqtSignal()
+    aborted = pyqtSignal()
+    completed = pyqtSignal()
+
+    def __init__(self):
         """
         constructor
-
-        @param transmissionStateDialog instance of dialog, that should show
-            the state of transmission
-        @param clip the clip object, that should be transferred
         """
         super().__init__()
-        self.dialog = transmissionStateDialog
         self.clip = None
         self.port = None
-        self.aborted = False
+        self.abortionState = False
 
     def run(self):
         """
         Runs the thread.
         """
-        label = self.dialog.findChild(QLabel, 'stateLabel')
-        bar = self.dialog.findChild(QProgressBar, 'progressBar')
-        bar.setValue(0)
-        bar.setMinimum(0)
-        # Set temporary max size (+ 3 because of compression, start and end)
-        bar.setMaximum(self.clip.size + 3)
-        abortButton = self.dialog.findChild(QPushButton, 'abortButton')
-        abortButton.setEnabled(True)
+        self.abortionState = False
+        self.startTransmissionProcess.emit()
 
-        if self.aborted:
-            abortButton.setEnabled(False)
-            self.dialog.done(0)
+        if self.abortionState:
             return
 
-        label.setText('Compress frames...')
+        # Clip compression
+        self.setText.emit('Compress frames...')
         compressedFrames = self.clip.export()
         clipLength = len(compressedFrames)
-        bar.setMaximum(clipLength + 3)  # Set final max size
-        bar.setValue(1)
+        self.setProgressLimits.emit(0, clipLength + 3)
+        self.addProgress.emit()
 
-        if self.aborted:
-            abortButton.setEnabled(False)
-            self.dialog.done(0)
+        if self.abortionState:
             return
 
-        label.setText('Start transmission...')
+        # Handshake
+        self.setText.emit('Start transmission...')
         Communicator.start(self.port)
-        bar.setValue(bar.value() + 1)
+        self.addProgress.emit()
 
-        if self.aborted:
-            abortButton.setEnabled(False)
-            label.setText('Abort transmission...')
+        if self.abortionState:
+            self.setText.emit('Abort transmission...')
             Communicator.end()
-            self.dialog.done(0)
             return
 
+        # Transmission of frames
         i = 0
         for frame in compressedFrames:
-            label.setText('Transmit frame {0:d} of {1:d}...'
+            self.setText.emit('Transmit frame {0:d} of {1:d}...'
                           .format(i, clipLength))
             Communicator.transmitFrame(frame)
-            bar.setValue(bar.value() + 1)
-            if self.aborted:
-                abortButton.setEnabled(False)
-                label.setText('Abort at frame {0:d} of {1:d}...'
+            self.addProgress.emit()
+            if self.abortionState:
+                self.setText.emit('Abort at frame {0:d} of {1:d}...'
                               .format(i, clipLength))
                 Communicator.end()
-                self.dialog.done(0)
                 return
             i += 1
 
-        abortButton.setEnabled(False)
+        self.completed.emit()
 
-        label.setText('Complete transmission...')
+        # Handshake for end
+        self.setText.emit('Complete transmission...')
         Communicator.end()
-        bar.setValue(bar.value() + 1)
+        self.addProgress.emit()
 
-        label.setText('Transmission complete...')
+        self.setText.emit('Transmission complete...')
         time.sleep(2)
-        self.dialog.done(1)
 
     def abort(self):
         """
         Aborts the transmission.
         """
-        self.aborted = True
+        self.abortionState = True
+        self.aborted.emit()
