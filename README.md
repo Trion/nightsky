@@ -15,7 +15,8 @@ For the firmware you need:
 * [Arduino IDE](http://arduino.cc/en/Main/Software) (or just the driver)
 * [Arduino-mk](https://github.com/sudar/Arduino-Makefile) (optional, if you don’t like the IDE)
 
-The client needs the following libraries:
+The client needs the following software:
+* [Python 3](http://python.org) (I used 3.3 and 3.4)
 * [Qt5](http://qt-project.org/)
 * [pySerial](http://pyserial.sourceforge.net/)
 * [PyQt5](http://pyqt.sourceforge.net/)
