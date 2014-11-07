@@ -242,6 +242,7 @@ class GUI:
         self.clip = Clip()
         self.clip.addFrame()
         self.starRenderer.setClip(self.clip)
+        self.updateFrameList()
 
     def actionToggleAllStars(self, event):
         """
